@@ -1,0 +1,198 @@
+.
+├── laravel-app
+│   ├── .editorconfig
+│   ├── .env
+│   ├── .env.example
+│   ├── .gitattributes
+│   ├── .gitignore
+│   ├── .phpunit.result.cache
+│   ├── app
+│   │   ├── .DS_Store
+│   │   ├── Console
+│   │   │   └── Commands
+│   │   │       └── SyncMetroData.php
+│   │   ├── DTOs
+│   │   │   ├── AddressDto.php
+│   │   │   ├── LineDto.php
+│   │   │   ├── StationDto.php
+│   │   │   ├── StationPathDto.php
+│   │   │   └── TrainPredictionDto.php
+│   │   ├── Http
+│   │   │   └── Controllers
+│   │   │       ├── Api
+│   │   │       │   └── MetroController.php
+│   │   │       └── Controller.php
+│   │   ├── Models
+│   │   │   ├── Line.php
+│   │   │   ├── Station.php
+│   │   │   ├── StationAddress.php
+│   │   │   ├── StationPath.php
+│   │   │   └── User.php
+│   │   ├── Providers
+│   │   │   ├── AppServiceProvider.php
+│   │   │   ├── RouteServiceProvider.php
+│   │   │   └── WmataServiceProvider.php
+│   │   └── Services
+│   │       ├── MetroDataService.php
+│   │       └── WmataApiService.php
+│   ├── artisan
+│   ├── bootstrap
+│   │   ├── app.php
+│   │   ├── cache
+│   │   │   ├── .gitignore
+│   │   │   ├── packages.php
+│   │   │   └── services.php
+│   │   └── providers.php
+│   ├── composer.json
+│   ├── composer.lock
+│   ├── config
+│   │   ├── app.php
+│   │   ├── auth.php
+│   │   ├── cache.php
+│   │   ├── cors.php
+│   │   ├── database.php
+│   │   ├── filesystems.php
+│   │   ├── logging.php
+│   │   ├── mail.php
+│   │   ├── queue.php
+│   │   ├── services.php
+│   │   ├── session.php
+│   │   └── wmata.php
+│   ├── database
+│   │   ├── .DS_Store
+│   │   ├── .gitignore
+│   │   ├── database.sqlite
+│   │   ├── factories
+│   │   │   └── UserFactory.php
+│   │   ├── migrations
+│   │   │   ├── .DS_Store
+│   │   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   │   ├── 0001_01_01_000002_create_jobs_table.php
+│   │   │   ├── 2025_06_04_184151_create_lines_table.php
+│   │   │   ├── 2025_06_04_184201_create_stations_table.php
+│   │   │   ├── 2025_06_04_184208_create_station_addresses_table.php
+│   │   │   └── 2025_06_04_184214_create_station_paths_table.php
+│   │   └── seeders
+│   │       └── DatabaseSeeder.php
+│   ├── docker-compose.yml
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── phpunit.xml
+│   ├── public
+│   │   ├── .htaccess
+│   │   ├── favicon.ico
+│   │   ├── index.php
+│   │   └── robots.txt
+│   ├── README.md
+│   ├── resources
+│   │   ├── css
+│   │   │   └── app.css
+│   │   ├── js
+│   │   │   ├── app.js
+│   │   │   └── bootstrap.js
+│   │   └── views
+│   │       └── welcome.blade.php
+│   ├── routes
+│   │   ├── api.php
+│   │   ├── console.php
+│   │   └── web.php
+│   ├── tests
+│   │   ├── Feature
+│   │   │   └── ExampleTest.php
+│   │   ├── TestCase.php
+│   │   └── Unit
+│   │       └── ExampleTest.php
+│   ├── vite.config.js
+│   └── vue-app
+│       └── src
+│           └── components
+│               └── metro
+│                   ├── form
+│                   └── predictions
+├── README.md
+└── vue-app
+    ├── .editorconfig
+    ├── .env
+    ├── .gitattributes
+    ├── .gitignore
+    ├── .prettierrc.json
+    ├── .vite
+    │   └── deps
+    │       ├── _metadata.json
+    │       ├── chunk-GY7FY3NU.js
+    │       ├── chunk-GY7FY3NU.js.map
+    │       ├── package.json
+    │       ├── pinia.js
+    │       ├── pinia.js.map
+    │       ├── vue-router.js
+    │       ├── vue-router.js.map
+    │       ├── vue.js
+    │       └── vue.js.map
+    ├── .vscode
+    │   ├── extensions.json
+    │   └── settings.json
+    ├── cypress
+    │   ├── e2e
+    │   │   └── example.cy.js
+    │   ├── fixtures
+    │   │   └── example.json
+    │   ├── jsconfig.json
+    │   └── support
+    │       ├── commands.js
+    │       ├── component-index.html
+    │       ├── component.js
+    │       └── e2e.js
+    ├── cypress.config.js
+    ├── eslint.config.js
+    ├── index.html
+    ├── jsconfig.json
+    ├── package-lock.json
+    ├── package.json
+    ├── public
+    │   └── favicon.ico
+    ├── README.md
+    ├── src
+    │   ├── api
+    │   │   └── index.js
+    │   ├── App.vue
+    │   ├── assets
+    │   │   ├── base.css
+    │   │   ├── logo.svg
+    │   │   └── main.css
+    │   ├── components
+    │   │   ├── __tests__
+    │   │   │   └── HelloWorld.cy.js
+    │   │   ├── ApiTest.vue
+    │   │   ├── HelloWorld.vue
+    │   │   ├── icons
+    │   │   │   ├── IconCommunity.vue
+    │   │   │   ├── IconDocumentation.vue
+    │   │   │   ├── IconEcosystem.vue
+    │   │   │   ├── IconSupport.vue
+    │   │   │   └── IconTooling.vue
+    │   │   ├── metro
+    │   │   │   ├── common
+    │   │   │   │   └── LoadingState.vue
+    │   │   │   ├── form
+    │   │   │   │   ├── LineSelector.vue
+    │   │   │   │   └── StationSelector.vue
+    │   │   │   └── predictions
+    │   │   │       └── PredictionList.vue
+    │   │   ├── MetroTrainPredictor.vue
+    │   │   ├── TheWelcome.vue
+    │   │   ├── TrainScheduleMain.vue
+    │   │   └── WelcomeItem.vue
+    │   ├── main.js
+    │   ├── router
+    │   │   └── index.js
+    │   ├── services
+    │   │   └── metroApi.js
+    │   ├── stores
+    │   │   └── counter.js
+    │   └── views
+    │       ├── AboutView.vue
+    │       ├── ApiTestView.vue
+    │       ├── HomeView.vue
+    │       └── NavView.vue
+    └── vite.config.js

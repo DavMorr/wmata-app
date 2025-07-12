@@ -1,0 +1,109 @@
+services:
+  # Laravel Backend Service
+  laravel-backend:
+    build:
+      context: ./laravel-app
+      dockerfile: Dockerfile
+    container_name: wmata-laravel
+    ports:
+      - "8080:80"  # Changed from 80 to 8080
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_HOST=mysql
+      - DB_DATABASE=laravel
+      - DB_USERNAME=sail
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./laravel-app:/var/www/html
+      - ./laravel-app/storage:/var/www/html/storage
+      - ./laravel-app/bootstrap/cache:/var/www/html/bootstrap/cache
+    networks:
+      - wmata-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/api/test || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Vue Frontend Service  
+  vue-frontend:
+    build:
+      context: ./vue-app
+      dockerfile: Dockerfile
+    container_name: wmata-vue
+    ports:
+      - "5173:5173"  # Keep this as is - it's less likely to conflict
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080/api  # Updated for new Laravel port
+      - VITE_API_URL=http://localhost:8080/api
+    volumes:
+      - ./vue-app:/app
+      - /app/node_modules  # Anonymous volume for node_modules
+    networks:
+      - wmata-network
+    depends_on:
+      laravel-backend:
+        condition: service_healthy
+    command: npm run dev
+    stdin_open: true
+    tty: true
+
+  # MySQL Database
+  mysql:
+    image: mysql/mysql-server:8.0
+    container_name: wmata-mysql
+    ports:
+      - "33066:3306"  # Changed from 3306 to 33066
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: sail
+      MYSQL_PASSWORD: password
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - wmata-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-ppassword"]
+      retries: 3
+      timeout: 5s
+      interval: 10s
+      start_period: 30s
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: wmata-redis
+    ports:
+      - "63799:6379"  # Changed from 6379 to 63799
+    volumes:
+      - redis_data:/data
+    networks:
+      - wmata-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 5s
+      interval: 10s
+
+networks:
+  wmata-network:
+    driver: bridge
+    name: wmata_network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

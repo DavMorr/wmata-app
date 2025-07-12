@@ -1,0 +1,438 @@
+# ============================================
+# DOCKER COMPOSE OVERRIDE (if needed)
+# ============================================
+
+# docker-compose.override.yml (optional customizations)
+version: '3'
+services:
+    laravel.test:
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        environment:
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        volumes:
+            - '.:/var/www/html'
+            - './docker/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+
+    # Optional: Add Node.js service for faster Vite builds
+    node:
+        image: 'node:18-alpine'
+        working_dir: /var/www/html
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        command: ['npm', 'run', 'dev', '--', '--host', '0.0.0.0']
+        ports:
+            - '${VITE_PORT:-5173}:5173'
+        depends_on:
+            - laravel.test
+
+# ============================================
+# UPDATED VITE CONFIG FOR SAIL
+# ============================================
+
+# vite.config.js - Updated for Sail compatibility
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+        vue(),
+    ],
+    server: {
+        host: '0.0.0.0', // Important for Docker
+        port: 5173,
+        hmr: {
+            host: 'localhost', // Use localhost for HMR
+        },
+        watch: {
+            usePolling: true, // Better file watching in Docker
+        },
+    },
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+    },
+});
+
+# ============================================
+# ENVIRONMENT CONFIGURATION FOR SAIL
+# ============================================
+
+# .env - Updated for Sail
+APP_NAME="Metro Transit Predictor"
+APP_ENV=local
+APP_KEY=base64:your_app_key_here
+APP_DEBUG=true
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+# Database (Sail default MySQL)
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=metro_app
+DB_USERNAME=sail
+DB_PASSWORD=password
+
+# Redis for caching (Sail default)
+BROADCAST_DRIVER=log
+CACHE_DRIVER=redis
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+SESSION_LIFETIME=120
+
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+# WMATA API Configuration
+WMATA_API_KEY=your_wmata_api_key_here
+WMATA_BASE_URL=https://api.wmata.com
+WMATA_RATE_LIMIT=1000
+WMATA_CACHE_PREDICTIONS=60
+WMATA_TIMEOUT=30
+WMATA_RETRY_ATTEMPTS=3
+
+# Vite configuration for Sail
+VITE_APP_NAME="${APP_NAME}"
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="${PUSHER_HOST}"
+VITE_PUSHER_PORT="${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+
+# Sail configuration
+SAIL_XDEBUG_MODE=develop,debug
+SAIL_SKIP_CHECKS=true
+
+# ============================================
+# PACKAGE.JSON UPDATES FOR SAIL
+# ============================================
+
+# package.json - Updated scripts for Sail
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite",
+        "dev:sail": "vite --host 0.0.0.0",
+        "sail:dev": "./vendor/bin/sail npm run dev:sail",
+        "sail:build": "./vendor/bin/sail npm run build",
+        "sail:install": "./vendor/bin/sail npm install"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.0",
+        "axios": "^1.6.4",
+        "laravel-vite-plugin": "^1.0.0",
+        "postcss": "^8.4.31",
+        "tailwindcss": "^3.3.6",
+        "vite": "^5.0.0",
+        "vue": "^3.4.0"
+    }
+}
+
+# ============================================
+# SAIL COMMANDS AND ALIASES
+# ============================================
+
+# Add to your ~/.bashrc or ~/.zshrc for convenience
+alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+
+# Useful Sail commands for this project:
+
+# Start the application
+# sail up -d
+
+# Install PHP dependencies
+# sail composer install
+
+# Install Node dependencies
+# sail npm install
+
+# Run migrations and seed data
+# sail artisan migrate
+# sail artisan metro:sync
+
+# Start Vite dev server (in separate terminal)
+# sail npm run dev
+
+# Run tests
+# sail artisan test
+
+# Access container shell
+# sail shell
+
+# View logs
+# sail logs
+
+# ============================================
+# UPDATED ROUTES FOR SAIL CORS
+# ============================================
+
+# config/cors.php - Updated for Sail development
+<?php
+
+return [
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'allowed_methods' => ['*'],
+    'allowed_origins' => [
+        'http://localhost',
+        'http://localhost:80',
+        'http://localhost:5173', // Vite dev server
+        'http://127.0.0.1:5173',
+    ],
+    'allowed_origins_patterns' => [],
+    'allowed_headers' => ['*'],
+    'exposed_headers' => [],
+    'max_age' => 0,
+    'supports_credentials' => false,
+];
+
+# ============================================
+# SUPERVISOR CONFIG FOR BACKGROUND TASKS
+# ============================================
+
+# docker/supervisord.conf - Optional background task management
+[supervisord]
+nodaemon=true
+
+[program:laravel-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/html/artisan queue:work redis --sleep=3 --tries=3
+autostart=true
+autorestart=true
+user=sail
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/html/storage/logs/worker.log
+
+[program:laravel-scheduler]
+process_name=%(program_name)s
+command=/bin/bash -c "while [ true ]; do php /var/www/html/artisan schedule:run --verbose --no-interaction; sleep 60; done"
+autostart=true
+autorestart=true
+user=sail
+redirect_stderr=true
+stdout_logfile=/var/www/html/storage/logs/scheduler.log
+
+# ============================================
+# BLADE TEMPLATE UPDATED FOR SAIL
+# ============================================
+
+# resources/views/metro.blade.php - Updated Vite integration
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'Metro Transit Predictor') }}</title>
+    
+    {{-- Vite with proper Sail configuration --}}
+    @if(app()->environment('local'))
+        {{-- Development mode with HMR --}}
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        {{-- Production mode --}}
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
+</head>
+<body class="bg-gray-50">
+    <div id="app">
+        <div class="container mx-auto px-4 py-8">
+            <metro-train-predictor></metro-train-predictor>
+        </div>
+    </div>
+</body>
+</html>
+
+# ============================================
+# SAIL STARTUP SCRIPT
+# ============================================
+
+#!/bin/bash
+# scripts/sail-setup.sh - One-time setup script
+
+echo "🚇 Setting up Metro Transit App with Laravel Sail..."
+
+# Copy environment file
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "✅ Environment file created"
+fi
+
+# Start Sail services
+echo "🐳 Starting Docker containers..."
+./vendor/bin/sail up -d
+
+# Wait for MySQL to be ready
+echo "⏳ Waiting for database to be ready..."
+./vendor/bin/sail artisan migrate:status > /dev/null 2>&1
+while [ $? -ne 0 ]; do
+    sleep 2
+    ./vendor/bin/sail artisan migrate:status > /dev/null 2>&1
+done
+
+# Generate app key if needed
+./vendor/bin/sail artisan key:generate
+
+# Run migrations
+echo "📊 Running database migrations..."
+./vendor/bin/sail artisan migrate
+
+# Install Node dependencies
+echo "📦 Installing Node.js dependencies..."
+./vendor/bin/sail npm install
+
+# Sync initial Metro data
+echo "🚇 Syncing initial Metro data..."
+./vendor/bin/sail artisan metro:sync
+
+# Build assets for production (optional)
+# ./vendor/bin/sail npm run build
+
+echo "✅ Setup complete! Your Metro Transit App is ready."
+echo ""
+echo "🌐 Application: http://localhost"
+echo "🚇 Metro App: http://localhost/metro"
+echo ""
+echo "To start development:"
+echo "  ./vendor/bin/sail npm run dev  # Start Vite dev server"
+echo ""
+echo "Useful commands:"
+echo "  ./vendor/bin/sail up -d        # Start containers"
+echo "  ./vendor/bin/sail down         # Stop containers"
+echo "  ./vendor/bin/sail artisan ...  # Run artisan commands"
+echo "  ./vendor/bin/sail composer ... # Run composer commands"
+echo "  ./vendor/bin/sail npm ...      # Run npm commands"
+
+# ============================================
+# MAKEFILE FOR CONVENIENCE
+# ============================================
+
+# Makefile - Optional convenience commands
+.PHONY: help install up down shell logs test sync
+
+help: ## Show this help message
+	@echo "Metro Transit App - Laravel Sail Commands"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+install: ## Initial setup and installation
+	@./scripts/sail-setup.sh
+
+up: ## Start the application
+	@./vendor/bin/sail up -d
+	@echo "✅ Application started at http://localhost"
+
+down: ## Stop the application
+	@./vendor/bin/sail down
+
+shell: ## Access the application container shell
+	@./vendor/bin/sail shell
+
+logs: ## View application logs
+	@./vendor/bin/sail logs -f
+
+test: ## Run the test suite
+	@./vendor/bin/sail artisan test
+
+sync: ## Sync Metro data from WMATA API
+	@./vendor/bin/sail artisan metro:sync
+
+dev: ## Start development with Vite
+	@echo "Starting development environment..."
+	@./vendor/bin/sail up -d
+	@./vendor/bin/sail npm run dev
+
+build: ## Build production assets
+	@./vendor/bin/sail npm run build
+
+fresh: ## Fresh installation (destructive)
+	@./vendor/bin/sail down -v
+	@./vendor/bin/sail up -d
+	@./vendor/bin/sail artisan migrate:fresh
+	@./vendor/bin/sail artisan metro:sync
+
+# ============================================
+# TESTING CONFIGURATION FOR SAIL
+# ============================================
+
+# .env.testing - Testing environment for Sail
+APP_NAME="Metro Transit Predictor"
+APP_ENV=testing
+APP_KEY=base64:test_key_here
+APP_DEBUG=true
+APP_URL=http://localhost
+
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=metro_app_testing
+DB_USERNAME=sail
+DB_PASSWORD=password
+
+CACHE_DRIVER=array
+SESSION_DRIVER=array
+QUEUE_CONNECTION=sync
+
+WMATA_API_KEY=test_api_key
+WMATA_BASE_URL=https://api.wmata.com
+
+# ============================================
+# PHPUNIT CONFIGURATION UPDATE
+# ============================================
+
+# phpunit.xml - Updated for Sail
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="mysql"/>
+        <env name="DB_DATABASE" value="metro_app_testing"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+    </php>
+</phpunit>

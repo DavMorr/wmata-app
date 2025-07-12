@@ -1,0 +1,132 @@
+@import './base.css';
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  font-weight: normal;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+/* Form Elements */
+input,
+select,
+button {
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 2px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: hsla(160, 100%, 37%, 1);
+}
+
+button {
+  cursor: pointer;
+  background: hsla(160, 100%, 37%, 1);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+button:hover {
+  background: hsla(160, 100%, 37%, 0.8);
+}
+
+button:disabled {
+  background: var(--color-border);
+  cursor: not-allowed;
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-heading);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+h5 {
+  font-size: 1.25rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+/* Container widths */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+  }
+
+  h5 {
+    font-size: 1.1rem;
+  }
+
+  h6 {
+    font-size: 1rem;
+  }
+
+  .container {
+    padding: 0 0.5rem;
+  }
+}
